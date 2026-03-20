@@ -35,37 +35,47 @@ END $$;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
 
--- Idempotent Policy Creation using DO blocks
-DO $$ 
-BEGIN
-    -- Tasks Policies
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'tasks' AND policyname = 'Allow anonymous select on tasks') THEN
-        CREATE POLICY "Allow anonymous select on tasks" ON tasks FOR SELECT USING (true);
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'tasks' AND policyname = 'Allow anonymous insert on tasks') THEN
-        CREATE POLICY "Allow anonymous insert on tasks" ON tasks FOR INSERT WITH CHECK (true);
-    END IF;
+-- Secure Idempotent Schema Adjustments
+-- Secure native schema adjustments without PL/pgSQL wrapping
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_id UUID DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_id UUID DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE;
 
-    -- Sessions Policies
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'sessions' AND policyname = 'Allow anonymous select on sessions') THEN
-        CREATE POLICY "Allow anonymous select on sessions" ON sessions FOR SELECT USING (true);
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'sessions' AND policyname = 'Allow anonymous insert on sessions') THEN
-        CREATE POLICY "Allow anonymous insert on sessions" ON sessions FOR INSERT WITH CHECK (true);
-    END IF;
+-- Drop purely anonymous insecure policies
+DROP POLICY IF EXISTS "Allow anonymous select on tasks" ON tasks;
+DROP POLICY IF EXISTS "Allow anonymous insert on tasks" ON tasks;
+DROP POLICY IF EXISTS "Allow anonymous update on tasks" ON tasks;
+DROP POLICY IF EXISTS "Allow anonymous delete on tasks" ON tasks;
+DROP POLICY IF EXISTS "Allow anonymous select on sessions" ON sessions;
+DROP POLICY IF EXISTS "Allow anonymous insert on sessions" ON sessions;
+DROP POLICY IF EXISTS "Allow anonymous update on sessions" ON sessions;
+DROP POLICY IF EXISTS "Allow anonymous delete on sessions" ON sessions;
 
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'sessions' AND policyname = 'Allow anonymous update on sessions') THEN
-        CREATE POLICY "Allow anonymous update on sessions" ON sessions FOR UPDATE USING (true);
-    END IF;
-    
-    -- New Delete Policies for CRUD
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'sessions' AND policyname = 'Allow anonymous delete on sessions') THEN
-        CREATE POLICY "Allow anonymous delete on sessions" ON sessions FOR DELETE USING (true);
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'tasks' AND policyname = 'Allow anonymous delete on tasks') THEN
-        CREATE POLICY "Allow anonymous delete on tasks" ON tasks FOR DELETE USING (true);
-    END IF;
-END $$;
+-- Set up Authenticated strict Row Level Security (RLS) policies
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+
+-- Tasks Policies
+CREATE POLICY "Users can only read their own tasks"
+  ON tasks FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only insert their own tasks"
+  ON tasks FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can only update their own tasks"
+  ON tasks FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only delete their own tasks"
+  ON tasks FOR DELETE USING (auth.uid() = user_id);
+
+-- Sessions Policies
+CREATE POLICY "Users can only read their own sessions"
+  ON sessions FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only insert their own sessions"
+  ON sessions FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can only update their own sessions"
+  ON sessions FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only delete their own sessions"
+  ON sessions FOR DELETE USING (auth.uid() = user_id);

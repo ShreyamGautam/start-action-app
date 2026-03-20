@@ -1,4 +1,5 @@
-import { Activity, Clock, Flame, PieChart } from "lucide-react";
+import { Activity, Clock, Flame, PieChart, LogOut } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { motion, Variants } from "framer-motion";
 
 export interface SessionData {
@@ -94,9 +95,18 @@ export default function StatsDashboard({ sessions: rawSessions }: StatsDashboard
             Rank: <span className="text-white">{rank.title}</span>
           </span>
         </div>
-        <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 shadow-inner hidden sm:block">
-          {totalSessions} Total Sessions
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 shadow-inner hidden sm:block">
+            {totalSessions} Total Sessions
+          </span>
+          <button 
+            onClick={() => supabase && supabase.auth.signOut()}
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-slate-700"
+            title="Log Out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
       </div>
       
       <motion.div 
