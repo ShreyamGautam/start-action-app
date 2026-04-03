@@ -3,7 +3,7 @@
 @theme {
   --color-brand-neon-green: #39ff14;
   --color-brand-neon-blue: #00f3ff;
-  --color-brand-bg: #0f172a;
+  --color-brand-bg: #030712;
 
   --animate-glow-pulse: glow-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   
@@ -15,12 +15,25 @@
       box-shadow: 0 0 25px rgba(57, 255, 20, 0.7), 0 0 45px rgba(57, 255, 20, 0.4);
     }
   }
+
+  @keyframes mesh-gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
 }
 
 @layer base {
   body {
     background-color: var(--color-brand-bg);
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(0, 243, 255, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(57, 255, 20, 0.05) 0px, transparent 50%),
+      linear-gradient(45deg, #030712 0%, #0f172a 100%);
+    background-size: 200% 200%;
+    animation: mesh-gradient 15s ease infinite;
     color: #f8fafc;
+    min-height: 100vh;
   }
 }
 
@@ -34,9 +47,19 @@
   }
 
   .glass-card {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .neon-glow-blue {
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.3), 0 0 30px rgba(0, 243, 255, 0.1);
+  }
+
+  .neon-glow-green {
+    box-shadow: 0 0 15px rgba(57, 255, 20, 0.3), 0 0 30px rgba(57, 255, 20, 0.1);
   }
 }
+

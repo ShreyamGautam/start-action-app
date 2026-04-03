@@ -32,9 +32,15 @@ export default function ActivityTable({ sessions, onRefresh }: ActivityTableProp
   const saveEdit = async (id: string) => {
     if (!supabase) return;
     try {
+      const newXp = editCompleted ? 10 : 3;
       await supabase
         .from('sessions')
-        .update({ reason: editReason, category: editCategory, completed: editCompleted })
+        .update({ 
+          reason: editReason, 
+          category: editCategory, 
+          completed: editCompleted,
+          xp_earned: newXp
+        })
         .eq('id', id);
         
       setEditingId(null);
@@ -79,6 +85,7 @@ export default function ActivityTable({ sessions, onRefresh }: ActivityTableProp
                 <th className="p-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest hidden md:table-cell">Reason</th>
                 <th className="p-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap hidden sm:table-cell">Date</th>
                 <th className="p-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Status</th>
+                <th className="p-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">XP</th>
                 <th className="p-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
@@ -86,6 +93,7 @@ export default function ActivityTable({ sessions, onRefresh }: ActivityTableProp
               <AnimatePresence>
                 {sessions.slice(0, 10).map((session, i) => {
                   const isEditing = editingId === session.id;
+                  const xp = session.xp_earned || (session.completed ? 10 : 3);
                   
                   return (
                     <motion.tr 
@@ -93,8 +101,9 @@ export default function ActivityTable({ sessions, onRefresh }: ActivityTableProp
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
+                      whileHover={isEditing ? {} : { scale: 1.005, backgroundColor: "rgba(30, 41, 59, 0.5)", zIndex: 10 }}
                       transition={{ duration: 0.2, delay: i * 0.05 }}
-                      className={`group transition-colors ${isEditing ? 'bg-slate-800 border-l-2 border-brand-neon-blue' : 'hover:bg-slate-800/40'}`}
+                      className={`group relative transition-all ${isEditing ? 'bg-slate-800 border-l-2 border-brand-neon-blue' : 'hover:bg-slate-800/40'}`}
                     >
                       <td className="p-4 font-medium text-slate-200">
                         <span className="line-clamp-2 md:line-clamp-1">{session.tasks?.task_text || "Unknown Task"}</span>
@@ -158,6 +167,10 @@ export default function ActivityTable({ sessions, onRefresh }: ActivityTableProp
                             <span className="hidden sm:inline">Missed</span>
                           </div>
                         )}
+                      </td>
+
+                      <td className="p-4 text-sm font-black text-brand-neon-blue italic whitespace-nowrap">
+                        +{xp} XP
                       </td>
                       
                       <td className="p-4 text-right whitespace-nowrap">

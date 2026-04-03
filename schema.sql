@@ -29,6 +29,10 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='sessions' AND column_name='category') THEN
         ALTER TABLE sessions ADD COLUMN category TEXT DEFAULT 'Other';
     END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='sessions' AND column_name='xp_earned') THEN
+        ALTER TABLE sessions ADD COLUMN xp_earned INTEGER DEFAULT 0;
+    END IF;
 END $$;
 
 -- Set up Row Level Security (RLS) policies
@@ -55,27 +59,35 @@ ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
 
 -- Tasks Policies
+DROP POLICY IF EXISTS "Users can only read their own tasks" ON tasks;
 CREATE POLICY "Users can only read their own tasks"
   ON tasks FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can only insert their own tasks" ON tasks;
 CREATE POLICY "Users can only insert their own tasks"
   ON tasks FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can only update their own tasks" ON tasks;
 CREATE POLICY "Users can only update their own tasks"
   ON tasks FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can only delete their own tasks" ON tasks;
 CREATE POLICY "Users can only delete their own tasks"
   ON tasks FOR DELETE USING (auth.uid() = user_id);
 
 -- Sessions Policies
+DROP POLICY IF EXISTS "Users can only read their own sessions" ON sessions;
 CREATE POLICY "Users can only read their own sessions"
   ON sessions FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can only insert their own sessions" ON sessions;
 CREATE POLICY "Users can only insert their own sessions"
   ON sessions FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can only update their own sessions" ON sessions;
 CREATE POLICY "Users can only update their own sessions"
   ON sessions FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can only delete their own sessions" ON sessions;
 CREATE POLICY "Users can only delete their own sessions"
   ON sessions FOR DELETE USING (auth.uid() = user_id);
