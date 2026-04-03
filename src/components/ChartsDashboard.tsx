@@ -10,10 +10,8 @@ interface ChartsDashboardProps {
 export default function ChartsDashboard({ sessions: rawSessions }: ChartsDashboardProps) {
   // --- BAR CHART: Focus Time Last 7 Days ---
   const focusTimeData = useMemo(() => {
-    // Only graph data for sessions marked 'Done'
-    const sessions = rawSessions.filter(s => s.completed);
-
-    const days: { dateStr: string; name: string; focusTime: number; starts: number }[] = [];
+    // Graph data for all sessions, because effort and time spent count even if skipped
+    const days: { dateStr: string; name: string; focusTime: number; starts: number; _totalSeconds: number }[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -32,16 +30,22 @@ export default function ChartsDashboard({ sessions: rawSessions }: ChartsDashboa
         name: d.toLocaleDateString("en-US", { weekday: "short" }),
         focusTime: 0,
         starts: 0,
+        _totalSeconds: 0
       });
     }
 
-    sessions.forEach(session => {
+    rawSessions.forEach(session => {
       const sessionDate = formatDateLocal(new Date(session.created_at));
       const match = days.find(d => d.dateStr === sessionDate);
       if (match) {
         match.starts += 1;
-        match.focusTime += Math.round(session.duration / 60);
+        match._totalSeconds += session.duration;
       }
+    });
+
+    // Convert total seconds to minutes
+    days.forEach(day => {
+      day.focusTime = Math.floor(Math.ceil(day._totalSeconds / 60));
     });
 
     return days;
@@ -49,11 +53,10 @@ export default function ChartsDashboard({ sessions: rawSessions }: ChartsDashboa
 
   // --- PIE CHART: Obstacles Breakdown ---
   const obstaclesData = useMemo(() => {
-    const sessions = rawSessions.filter(s => s.completed);
-    
+    // Obstacles make sense for missed or stuck sessions
     const reasonCounts: Record<string, number> = {};
-    sessions.forEach(s => {
-      if (s.reason && s.reason !== "N/A" && s.reason !== "Unknown") {
+    rawSessions.forEach(s => {
+      if (s.reason && s.reason.trim() !== "" && s.reason !== "N/A" && s.reason !== "Unknown") {
         const key = s.reason.charAt(0).toUpperCase() + s.reason.slice(1);
         reasonCounts[key] = (reasonCounts[key] || 0) + 1;
       }
@@ -69,10 +72,8 @@ export default function ChartsDashboard({ sessions: rawSessions }: ChartsDashboa
 
   // --- PIE CHART: Categories Breakdown ---
   const categoriesData = useMemo(() => {
-    const sessions = rawSessions.filter(s => s.completed);
-    
     const catCounts: Record<string, number> = {};
-    sessions.forEach(s => {
+    rawSessions.forEach(s => {
       const cat = s.category || "Other";
       catCounts[cat] = (catCounts[cat] || 0) + 1;
     });

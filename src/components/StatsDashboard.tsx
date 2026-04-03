@@ -4,6 +4,7 @@ import { motion, Variants } from "framer-motion";
 
 export interface SessionData {
   id: string;
+  task_id: string;
   duration: number;
   reason: string;
   category?: string;
@@ -57,18 +58,18 @@ export default function StatsDashboard({ sessions: rawSessions }: StatsDashboard
   const progressPercent = Math.min(100, Math.max(0, (xpIntoLevel / levelRequirement) * 100));
 
   // Calculations
-  const totalSessions = completedSessions.length;
+  const totalSessions = rawSessions.length;
   
   const today = new Date();
   today.setHours(0,0,0,0);
   
-  const todaySessions = completedSessions.filter(s => new Date(s.created_at) >= today).length;
+  const todaySessions = rawSessions.filter(s => new Date(s.created_at) >= today).length;
   
-  const totalFocusSeconds = completedSessions.reduce((acc, curr) => acc + curr.duration, 0);
-  const totalFocusMinutes = Math.round(totalFocusSeconds / 60);
+  const totalFocusSeconds = rawSessions.reduce((acc, curr) => acc + curr.duration, 0);
+  const totalFocusMinutes = Math.floor(Math.ceil(totalFocusSeconds / 60)); // Round up partial minutes if desired, or just floor
 
-  // Streak logic
-  const uniqueDates = [...new Set(completedSessions.map(s => 
+  // Streak logic - Streak counts any start (rawSessions), rewarding momentum
+  const uniqueDates = [...new Set(rawSessions.map(s => 
     new Date(s.created_at).toISOString().split('T')[0]
   ))].sort((a, b) => new Date(b).getTime() - new Date(a).getTime()); 
 

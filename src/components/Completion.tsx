@@ -21,12 +21,20 @@ export default function Completion({ taskText, sessionId, onRestart }: Completio
     const xp = completed ? 10 : 3;
     if (sessionId && supabase) {
       try {
-        await supabase
+        const { data, error } = await supabase
           .from("sessions")
           .update({ completed, xp_earned: xp })
-          .eq("id", sessionId);
-      } catch (err) {
+          .eq("id", sessionId)
+          .select();
+          
+        if (error) {
+          alert(`Database Error: ${error.message}`);
+        } else if (!data || data.length === 0) {
+          alert("Could not mark task as completed. You do not have UPDATE permissions. Please re-run the schema.sql in the Supabase SQL editor.");
+        }
+      } catch (err: any) {
         console.error("Failed to update status", err);
+        alert(`Unexpected Error: ${err.message}`);
       }
     }
   };

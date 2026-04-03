@@ -16,6 +16,7 @@ export default function ActivityTable({ sessions, onRefresh }: ActivityTableProp
   const [editReason, setEditReason] = useState("");
   const [editCategory, setEditCategory] = useState("Other");
   const [editCompleted, setEditCompleted] = useState(false);
+  const [editTaskText, setEditTaskText] = useState("");
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   const startEdit = (session: SessionData) => {
@@ -23,17 +24,19 @@ export default function ActivityTable({ sessions, onRefresh }: ActivityTableProp
     setEditReason(session.reason || "");
     setEditCategory(session.category || "Other");
     setEditCompleted(session.completed);
+    setEditTaskText(session.tasks?.task_text || "");
   };
 
   const cancelEdit = () => {
     setEditingId(null);
   };
 
-  const saveEdit = async (id: string) => {
+  const saveEdit = async (session: SessionData) => {
     if (!supabase) return;
     try {
       const newXp = editCompleted ? 10 : 3;
-      await supabase
+      
+      const { data: sessionData, error: sessionErr } = await supabase
         .from('sessions')
         .update({ 
           reason: editReason, 
@@ -41,12 +44,34 @@ export default function ActivityTable({ sessions, onRefresh }: ActivityTableProp
           completed: editCompleted,
           xp_earned: newXp
         })
-        .eq('id', id);
+        .eq('id', session.id)
+        .select();
+
+      if (sessionErr) {
+        alert(`Error updating session: ${sessionErr.message}`);
+        return;
+      } else if (!sessionData || sessionData.length === 0) {
+        alert("Update failed. You might not have the correct permissions (Check if your Supabase RLS UPDATE policy exists!). Re-run schema.sql.");
+        return;
+      }
+        
+      if (session.task_id && editTaskText.trim() !== "") {
+        const { error: taskErr } = await supabase
+          .from('tasks')
+          .update({ task_text: editTaskText.trim() })
+          .eq('id', session.task_id);
+          
+        if (taskErr) {
+           alert(`Error updating task text: ${taskErr.message}`);
+           return;
+        }
+      }
         
       setEditingId(null);
       onRefresh();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      alert("Unexpected error during save: " + e.message);
     }
   };
 
@@ -106,7 +131,16 @@ export default function ActivityTable({ sessions, onRefresh }: ActivityTableProp
                       className={`group relative transition-all ${isEditing ? 'bg-slate-800 border-l-2 border-brand-neon-blue' : 'hover:bg-slate-800/40'}`}
                     >
                       <td className="p-4 font-medium text-slate-200">
-                        <span className="line-clamp-2 md:line-clamp-1">{session.tasks?.task_text || "Unknown Task"}</span>
+                        {isEditing ? (
+                          <input 
+                            type="text" 
+                            className="bg-slate-900 border border-brand-neon-blue/50 text-slate-200 rounded px-2 py-1 flex-1 w-full min-w-[150px] sm:min-w-[200px] focus:outline-none focus:border-brand-neon-blue" 
+                            value={editTaskText}
+                            onChange={(e) => setEditTaskText(e.target.value)}
+                          />
+                        ) : (
+                          <span className="line-clamp-2 md:line-clamp-1">{session.tasks?.task_text || "Unknown Task"}</span>
+                        )}
                       </td>
                       
                       <td className="p-4 text-sm text-brand-neon-blue hidden sm:table-cell font-bold">
@@ -176,7 +210,7 @@ export default function ActivityTable({ sessions, onRefresh }: ActivityTableProp
                       <td className="p-4 text-right whitespace-nowrap">
                         {isEditing ? (
                           <div className="flex items-center justify-end gap-2">
-                             <button onClick={() => saveEdit(session.id)} className="p-1.5 rounded bg-brand-neon-green/20 text-brand-neon-green hover:bg-brand-neon-green hover:text-slate-900 transition-colors">
+                             <button onClick={() => saveEdit(session)} className="p-1.5 rounded bg-brand-neon-green/20 text-brand-neon-green hover:bg-brand-neon-green hover:text-slate-900 transition-colors">
                                <Check className="w-4 h-4" />
                              </button>
                              <button onClick={cancelEdit} className="p-1.5 rounded bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors">
