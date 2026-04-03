@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { SessionData } from "./StatsDashboard";
 import { CheckCircle, Clock, XCircle, Trash2, Edit2, Check, X } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { useSupabase } from "@/hooks/useSupabase";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface ActivityTableProps {
@@ -10,6 +10,7 @@ interface ActivityTableProps {
 }
 
 export default function ActivityTable({ sessions, onRefresh }: ActivityTableProps) {
+  const supabase = useSupabase();
   const [editingId, setEditingId] = useState<string | null>(null);
   
   // Edit form state

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { supabase } from "@/lib/supabase";
+import { useSupabase } from "@/hooks/useSupabase";
 
 interface FocusModeProps {
   taskText: string;
@@ -13,6 +13,7 @@ interface FocusModeProps {
 }
 
 export default function FocusMode({ taskText, duration, reason, category, onComplete }: FocusModeProps) {
+  const supabase = useSupabase();
   const [timeLeft, setTimeLeft] = useState(duration);
   const [isStarted, setIsStarted] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);

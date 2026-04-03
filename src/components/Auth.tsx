@@ -1,134 +1,87 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { motion, AnimatePresence } from "framer-motion";
-import { Lock, Mail, ArrowRight, Loader2 } from "lucide-react";
+import { SignIn, SignUp } from "@clerk/nextjs";
+import { motion } from "framer-motion";
 
-export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
+interface AuthProps {
+  initialStep?: "login" | "signup";
+}
 
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!supabase) return;
-    
-    setLoading(true);
-    setErrorMsg("");
+export default function Auth({ initialStep = "login" }: AuthProps) {
+  const [isLogin, setIsLogin] = useState(initialStep === "login");
 
-    try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) setErrorMsg(error.message);
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-        if (error) setErrorMsg(error.message);
-        else setErrorMsg("Check your email for the confirmation link!");
-      }
-    } catch (err: any) {
-      setErrorMsg(err.message || "An error occurred");
-    } finally {
-      setLoading(false);
+  const sharedAppearance = {
+    elements: {
+      rootBox: "mx-auto w-full",
+      card: "bg-transparent shadow-none border-none w-full",
+      headerTitle: "text-2xl font-black text-white text-center mb-1",
+      headerSubtitle: "text-slate-400 text-center font-medium mb-6",
+      socialButtonsBlockButton: "bg-white/5 border-white/10 hover:bg-white/10 text-white transition-all rounded-2xl h-12 flex justify-center items-center gap-3",
+      socialButtonsBlockButtonText: "text-white font-bold tracking-tight",
+      dividerLine: "bg-slate-800",
+      dividerText: "text-slate-500 font-bold uppercase tracking-widest text-[10px]",
+      formButtonPrimary: "bg-brand-neon-blue hover:bg-brand-neon-blue/80 text-brand-bg font-black uppercase tracking-widest h-12 rounded-2xl shadow-[0_0_15px_rgba(0,243,255,0.3)] transition-all",
+      formFieldLabel: "text-slate-400 font-bold uppercase tracking-widest text-[10px] mb-1.5 ml-1",
+      formFieldInput: "bg-slate-900/60 border-slate-700 text-white rounded-2xl px-4 h-12 focus:border-brand-neon-blue transition-all shadow-inner block outline-none",
+      footerActionText: "text-slate-500 font-medium",
+      footerActionLink: "text-brand-neon-blue hover:text-brand-neon-blue/80 font-bold",
+      identityPreviewText: "text-white font-bold",
+      identityPreviewEditButtonIcon: "text-brand-neon-blue",
+      formResendCodeLink: "text-brand-neon-blue",
+      formFieldAction: "text-brand-neon-blue hover:text-brand-neon-blue/80 font-bold underline-none",
     }
   };
 
   return (
-    <div className="w-full max-w-md mx-auto relative z-10 pt-20">
+    <div className="w-full max-w-md mx-auto relative z-10 pt-10 pb-20 px-4">
       <motion.div 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-card p-8 md:p-10 rounded-[2rem] relative overflow-hidden ring-1 ring-white/10 shadow-2xl backdrop-blur-xl"
+        className="flex flex-col items-center"
       >
-        <div className="absolute -top-16 -right-16 w-48 h-48 bg-brand-neon-blue/20 blur-[100px] rounded-full pointer-events-none" />
-        <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-purple-500/20 blur-[100px] rounded-full pointer-events-none" />
+        <div className="mb-10 text-center">
+          <motion.h2 
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            className="text-5xl font-black text-white mb-2 tracking-tighter italic drop-shadow-[0_0_15px_rgba(0,243,255,0.2)]"
+          >
+            START <span className="text-brand-neon-blue">ACTION</span>
+          </motion.h2>
+          <div className="h-1 w-20 bg-gradient-to-r from-brand-neon-blue to-brand-neon-green mx-auto rounded-full" />
+        </div>
 
-        <div className="relative z-10">
-          <h2 className="text-3xl font-black text-white mb-2 tracking-wide">
-            {isLogin ? "Welcome Back" : "Start Fresh"}
-          </h2>
-          <p className="text-slate-400 text-sm mb-8 font-medium">
-            {isLogin ? "Log in to track your deep work." : "Create a secure account to begin."}
-          </p>
+        <div className="glass-card w-full p-6 sm:p-8 rounded-[2.5rem] relative overflow-hidden ring-1 ring-white/10 shadow-2xl backdrop-blur-3xl bg-slate-900/40 border border-white/5">
+          <div className="absolute -top-32 -right-32 w-64 h-64 bg-brand-neon-blue/10 blur-[130px] rounded-full pointer-events-none" />
+          <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-brand-neon-green/10 blur-[130px] rounded-full pointer-events-none" />
+          
+          <div className="relative z-10">
+            {isLogin ? (
+              <SignIn 
+                path="/sign-in"
+                routing="path" 
+                appearance={sharedAppearance}
+                signUpUrl="/sign-up"
+              />
+            ) : (
+              <SignUp 
+                path="/sign-up"
+                routing="path"
+                appearance={sharedAppearance}
+                signInUrl="/sign-in"
+              />
+            )}
+          </div>
+        </div>
 
-          <form onSubmit={handleAuth} className="flex flex-col gap-5">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Email</label>
-              <div className="relative flex items-center bg-slate-900/60 border border-slate-700/80 rounded-2xl overflow-hidden focus-within:border-brand-neon-blue focus-within:ring-1 focus-within:ring-brand-neon-blue transition-all shadow-inner">
-                <Mail className="absolute left-4 w-5 h-5 text-slate-500" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="you@email.com"
-                  className="w-full bg-transparent text-white pl-12 pr-4 py-4 text-sm focus:outline-none placeholder:text-slate-600"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Password</label>
-              <div className="relative flex items-center bg-slate-900/60 border border-slate-700/80 rounded-2xl overflow-hidden focus-within:border-brand-neon-blue focus-within:ring-1 focus-within:ring-brand-neon-blue transition-all shadow-inner">
-                <Lock className="absolute left-4 w-5 h-5 text-slate-500" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className="w-full bg-transparent text-white pl-12 pr-4 py-4 text-sm focus:outline-none placeholder:text-slate-600"
-                />
-              </div>
-            </div>
-
-            <AnimatePresence>
-              {errorMsg && (
-                <motion.p 
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className={`text-xs font-bold ${errorMsg.includes('Check your') ? 'text-brand-neon-green' : 'text-rose-400'} text-center mt-2`}
-                >
-                  {errorMsg}
-                </motion.p>
-              )}
-            </AnimatePresence>
-
+        <div className="mt-8">
             <button
-              type="submit"
-              disabled={loading || !email || !password}
-              className="mt-4 group relative flex items-center justify-center gap-2 bg-brand-neon-blue/10 hover:bg-brand-neon-blue/20 disabled:opacity-50 disabled:hover:bg-brand-neon-blue/10 text-brand-neon-blue py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all border border-brand-neon-blue/40 hover:border-brand-neon-blue shadow-[0_0_15px_rgba(0,243,255,0.1)] hover:shadow-[0_0_25px_rgba(0,243,255,0.3)]"
-            >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                <>
-                  {isLogin ? "Log In" : "Sign Up"}
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-8 text-center bg-slate-900/50 rounded-xl py-3 border border-slate-800/50">
-            <button
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setErrorMsg("");
-              }}
-              className="text-xs text-slate-400 font-bold hover:text-white transition-colors tracking-wide"
+              onClick={() => setIsLogin(!isLogin)}
+              className="px-8 py-3 rounded-2xl bg-slate-800/40 border border-slate-700/50 text-xs text-slate-400 font-bold hover:text-white hover:border-brand-neon-blue/40 transition-all tracking-widest uppercase backdrop-blur-md"
             >
               {isLogin ? "Need an account? " : "Already have an account? "}
-              <span className="text-brand-neon-blue ml-1 uppercase">{isLogin ? "Sign Up" : "Log In"}</span>
+              <span className="text-brand-neon-blue ml-1">{isLogin ? "Sign Up" : "Log In"}</span>
             </button>
-          </div>
         </div>
       </motion.div>
     </div>

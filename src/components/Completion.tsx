@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, RotateCcw, XCircle } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { useSupabase } from "@/hooks/useSupabase";
 
 interface CompletionProps {
   taskText: string;
@@ -14,6 +14,7 @@ interface CompletionProps {
 }
 
 export default function Completion({ taskText, sessionId, onRestart }: CompletionProps) {
+  const supabase = useSupabase();
   const [marked, setMarked] = useState<boolean | null>(null);
 
   const markTask = async (completed: boolean) => {

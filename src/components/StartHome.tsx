@@ -1,18 +1,22 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Play } from "lucide-react";
+import { Play, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/lib/supabase";
+import { UserButton, useUser } from "@clerk/nextjs";
+import { useSupabase } from "@/hooks/useSupabase";
 import StatsDashboard, { SessionData } from "./StatsDashboard";
 import ActivityTable from "./ActivityTable";
 import ChartsDashboard from "./ChartsDashboard";
+import Leaderboard from "./Leaderboard";
 
 interface StartHomeProps {
   onStart: (task: string, duration: number, category: string) => void;
 }
 
 export default function StartHome({ onStart }: StartHomeProps) {
+  const { user } = useUser();
+  const supabase = useSupabase();
   const [task, setTask] = useState("");
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,6 +33,23 @@ export default function StartHome({ onStart }: StartHomeProps) {
     { name: "Deep Worker", minXp: 301 },
     { name: "Flow Master", minXp: 601 },
   ];
+
+  const syncUserProfile = useCallback(async (totalXp: number, rank: string) => {
+    if (!user || !supabase) return;
+    
+    try {
+      await supabase.from("profiles").upsert({
+        user_id: user.id,
+        display_name: user.firstName || user.username || "Anonymous",
+        avatar_url: user.imageUrl,
+        total_xp: totalXp,
+        current_rank: rank,
+        last_active: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error("Profile sync failed", err);
+    }
+  }, [user, supabase]);
 
   const fetchAllData = useCallback(async () => {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return;
@@ -63,13 +84,16 @@ export default function StartHome({ onStart }: StartHomeProps) {
         
         setPrevRank(currentRank);
         setSessions(newSessions);
+        
+        // Sync social profile
+        syncUserProfile(totalXP, currentRank);
       }
     } catch (error) {
       console.error("Error fetching sessions:", error);
     } finally {
       setLoading(false);
     }
-  }, [prevRank]);
+  }, [prevRank, user, syncUserProfile]);
 
   useEffect(() => {
     fetchAllData();
@@ -82,6 +106,15 @@ export default function StartHome({ onStart }: StartHomeProps) {
 
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col items-center gap-14 py-8 relative">
+      <div className="fixed top-6 right-6 z-50 glass-card p-1.5 rounded-full border border-white/10 shadow-2xl backdrop-blur-xl hover:border-brand-neon-blue/50 transition-colors">
+        <UserButton 
+          appearance={{
+            elements: {
+              avatarBox: "w-10 h-10 ring-2 ring-brand-neon-blue/20 hover:ring-brand-neon-blue/50 transition-all"
+            }
+          }}
+        />
+      </div>
       <AnimatePresence>
         {showLevelUp && (
           <motion.div
@@ -109,9 +142,9 @@ export default function StartHome({ onStart }: StartHomeProps) {
         <motion.h1 
           animate={{ scale: [1, 1.02, 1] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="text-5xl md:text-6xl font-black mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-brand-neon-blue via-[#39ff14] to-brand-neon-green pb-2 drop-shadow-[0_0_25px_rgba(57,255,20,0.3)]"
+          className="text-4xl md:text-6xl font-black mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-brand-neon-blue via-[#39ff14] to-brand-neon-green pb-2 drop-shadow-[0_0_25px_rgba(57,255,20,0.3)]"
         >
-          Start Action
+          Start Action{user?.firstName ? `, ${user.firstName}` : ""}
         </motion.h1>
         
         <div className="glass-card w-full p-8 rounded-[2rem] flex flex-col gap-8 relative overflow-hidden ring-1 ring-white/10 shadow-2xl backdrop-blur-xl group">
@@ -207,18 +240,16 @@ export default function StartHome({ onStart }: StartHomeProps) {
              initial={{ opacity: 0, y: 40 }}
              animate={{ opacity: 1, y: 0 }}
              transition={{ duration: 0.7, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
-             className="w-full flex flex-col gap-10 px-2"
+             className="w-full grid grid-cols-1 lg:grid-cols-12 gap-10 px-2"
            >
-              <div className="w-full">
+              <div className="lg:col-span-8 flex flex-col gap-10">
                 <StatsDashboard sessions={sessions} />
+                <ChartsDashboard sessions={sessions} />
+                <ActivityTable sessions={sessions} onRefresh={fetchAllData} />
               </div>
 
-              <div className="w-full">
-                <ChartsDashboard sessions={sessions} />
-              </div>
-              
-              <div className="w-full">
-                <ActivityTable sessions={sessions} onRefresh={fetchAllData} />
+              <div className="lg:col-span-4 mt-16 sm:mt-0">
+                <Leaderboard />
               </div>
            </motion.div>
         )}
