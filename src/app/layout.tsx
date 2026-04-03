@@ -16,12 +16,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en" className="dark">
-        <body className={`${inter.className} min-h-screen bg-brand-bg text-slate-50 flex flex-col antialiased selection:bg-brand-neon-green selection:text-brand-bg`}>
+    <html lang="en" className="dark">
+      <body className={`${inter.className} min-h-screen bg-brand-bg text-slate-50 flex flex-col antialiased selection:bg-brand-neon-green selection:text-brand-bg`}>
+        <ClerkProvider>
           {children}
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }

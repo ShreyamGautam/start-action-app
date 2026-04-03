@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Play, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { UserButton, useUser, Show } from "@clerk/nextjs";
 import { useSupabase } from "@/hooks/useSupabase";
 import StatsDashboard, { SessionData } from "./StatsDashboard";
 import ActivityTable from "./ActivityTable";
@@ -107,13 +107,15 @@ export default function StartHome({ onStart }: StartHomeProps) {
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col items-center gap-14 py-8 relative">
       <div className="fixed top-6 right-6 z-50 glass-card p-1.5 rounded-full border border-white/10 shadow-2xl backdrop-blur-xl hover:border-brand-neon-blue/50 transition-colors">
-        <UserButton 
-          appearance={{
-            elements: {
-              avatarBox: "w-10 h-10 ring-2 ring-brand-neon-blue/20 hover:ring-brand-neon-blue/50 transition-all"
-            }
-          }}
-        />
+        <Show when="signed-in">
+          <UserButton 
+            appearance={{
+              elements: {
+                avatarBox: "w-10 h-10 ring-2 ring-brand-neon-blue/20 hover:ring-brand-neon-blue/50 transition-all"
+              }
+            }}
+          />
+        </Show>
       </div>
       <AnimatePresence>
         {showLevelUp && (
