@@ -119,7 +119,7 @@ export default function StartHome({ onStart }: StartHomeProps) {
         </Show>
       </div>
 
-      <div className="fixed bottom-6 left-6 z-40 hidden md:block">
+      <div className="fixed bottom-4 sm:bottom-6 left-4 sm:left-6 z-40">
         <PresenceCounter />
       </div>
       <AnimatePresence>
@@ -242,7 +242,7 @@ export default function StartHome({ onStart }: StartHomeProps) {
       </motion.div>
 
       <AnimatePresence>
-        {!loading && sessions.length > 0 && (
+        {!loading && (
            <motion.div 
              initial={{ opacity: 0, y: 40 }}
              animate={{ opacity: 1, y: 0 }}
