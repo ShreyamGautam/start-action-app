@@ -9,6 +9,7 @@ import StatsDashboard, { SessionData } from "./StatsDashboard";
 import ActivityTable from "./ActivityTable";
 import ChartsDashboard from "./ChartsDashboard";
 import Leaderboard from "./Leaderboard";
+import PresenceCounter from "./PresenceCounter";
 
 interface StartHomeProps {
   onStart: (task: string, duration: number, category: string) => void;
@@ -116,6 +117,10 @@ export default function StartHome({ onStart }: StartHomeProps) {
             }}
           />
         </Show>
+      </div>
+
+      <div className="fixed bottom-6 left-6 z-40 hidden md:block">
+        <PresenceCounter />
       </div>
       <AnimatePresence>
         {showLevelUp && (

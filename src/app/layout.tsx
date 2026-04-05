@@ -8,6 +8,13 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Start Action",
   description: "Overcome procrastination by starting instantly.",
+  manifest: "/manifest.json",
+  themeColor: "#020617",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Start Action",
+  },
 };
 
 export default function RootLayout({
