@@ -8,8 +8,7 @@ import { useSupabase } from "@/hooks/useSupabase";
 import StatsDashboard, { SessionData } from "./StatsDashboard";
 import ActivityTable from "./ActivityTable";
 import ChartsDashboard from "./ChartsDashboard";
-import Leaderboard from "./Leaderboard";
-import PresenceCounter from "./PresenceCounter";
+
 
 interface StartHomeProps {
   onStart: (task: string, duration: number, category: string) => void;
@@ -74,7 +73,7 @@ export default function StartHome({ onStart }: StartHomeProps) {
     } finally {
       setLoading(false);
     }
-  }, [prevRank, user]);
+  }, [prevRank, user, supabase]);
 
   useEffect(() => {
     fetchAllData();
@@ -223,17 +222,11 @@ export default function StartHome({ onStart }: StartHomeProps) {
              initial={{ opacity: 0, y: 40 }}
              animate={{ opacity: 1, y: 0 }}
              transition={{ duration: 0.7, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
-             className="w-full grid grid-cols-1 lg:grid-cols-12 gap-10 px-2"
+             className="w-full flex flex-col gap-10 px-2"
            >
-              <div className="lg:col-span-8 flex flex-col gap-10">
-                <StatsDashboard sessions={sessions} />
-                <ChartsDashboard sessions={sessions} />
-                <ActivityTable sessions={sessions} onRefresh={fetchAllData} />
-              </div>
-
-              <div className="lg:col-span-4 mt-16 sm:mt-0">
-                <Leaderboard />
-              </div>
+              <StatsDashboard sessions={sessions} />
+              <ChartsDashboard sessions={sessions} />
+              <ActivityTable sessions={sessions} onRefresh={fetchAllData} />
            </motion.div>
         )}
       </AnimatePresence>

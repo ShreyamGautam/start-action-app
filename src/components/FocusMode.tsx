@@ -1,9 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { Music, Volume2, VolumeX, Play, Pause } from "lucide-react";
 import { useSupabase } from "@/hooks/useSupabase";
 import { useAuth } from "@clerk/nextjs";
+
+const AMBIENT_TRACKS = [
+  { id: 'lofi', name: 'Deep Focus', url: 'https://stream.zeno.fm/f3wvbbsc698uv' },
+  { id: 'synth', name: 'Synthwave Night', url: 'https://p.scdn.co/mp3-preview/3807abf233480d195f269a83859f77f9859f37c9?cid=774b75d1d0044af78930432716c02978' },
+  { id: 'rain', name: 'Cyber Rain', url: 'https://www.soundjay.com/nature/rain-07.mp3' }
+];
 
 interface FocusModeProps {
   taskText: string;
@@ -17,6 +24,14 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
   const [timeLeft, setTimeLeft] = useState(duration);
   const [isStarted, setIsStarted] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  
+  // Ambient Sound State
+  const [currentTrack, setCurrentTrack] = useState(AMBIENT_TRACKS[0]);
+  const [isMuted, setIsMuted] = useState(true);
+  const [volume, setVolume] = useState(0.4);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [showConfig, setShowConfig] = useState(false);
+
   const supabase = useSupabase();
   const { userId } = useAuth();
 
@@ -105,6 +120,17 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
     return () => clearInterval(timer);
   }, [timeLeft, onComplete, sessionId]);
 
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+      if (!isMuted) {
+        audioRef.current.play().catch(() => setIsMuted(true));
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [isMuted, currentTrack, volume]);
+
   const progress = ((duration - timeLeft) / duration) * 100;
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -134,13 +160,13 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
         </motion.div>
 
         <motion.div 
-          className="relative flex items-center justify-center mb-16"
+          className="relative flex items-center justify-center mb-12"
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.4, type: "spring" }}
         >
           {/* Progress Ring */}
-          <svg className="w-64 h-64 transform -rotate-90">
+          <svg className="w-56 h-56 sm:w-64 sm:h-64 transform -rotate-90">
             <circle
               cx="128"
               cy="128"
@@ -164,7 +190,7 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
           </svg>
           
           <div className="absolute flex flex-col items-center">
-            <span className="text-6xl font-black tabular-nums text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+            <span className="text-5xl sm:text-6xl font-black tabular-nums text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
               {minutes}:{seconds.toString().padStart(2, '0')}
             </span>
           </div>
@@ -173,11 +199,60 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
           <div className="absolute inset-0 rounded-full animate-glow-pulse pointer-events-none" />
         </motion.div>
 
+        {/* Cleaner Neon Radio UI */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="w-full max-w-sm flex flex-col items-center gap-6 mb-12 bg-white/5 p-6 rounded-3xl border border-white/10 backdrop-blur-md"
+        >
+          <audio 
+            ref={audioRef} 
+            src={currentTrack.url} 
+            loop 
+            playsInline
+          />
+          
+          <div className="flex flex-wrap justify-center gap-2">
+            {AMBIENT_TRACKS.map(track => (
+              <button
+                key={track.id}
+                onClick={() => setCurrentTrack(track)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${currentTrack.id === track.id ? 'bg-brand-neon-blue/20 text-brand-neon-blue border border-brand-neon-blue' : 'bg-white/5 text-slate-500 border border-transparent hover:text-slate-300'}`}
+              >
+                {track.name}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-6 w-full px-2">
+            <button
+              onClick={() => setIsMuted(!isMuted)}
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${!isMuted ? 'bg-brand-neon-blue/20 text-brand-neon-blue' : 'bg-white/5 text-slate-500'}`}
+            >
+              {!isMuted ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            </button>
+            
+            <div className="flex-1 flex items-center gap-3">
+              <Music className="w-4 h-4 text-slate-500" />
+              <input 
+                type="range" 
+                min="0" 
+                max="1" 
+                step="0.01" 
+                value={volume}
+                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                className="flex-1 accent-brand-neon-blue h-1 bg-white/10 rounded-full appearance-none cursor-pointer"
+              />
+            </div>
+          </div>
+        </motion.div>
+
         <button 
           onClick={() => onComplete(sessionId)}
-          className="text-slate-500 hover:text-white transition-colors text-sm uppercase tracking-wider mt-4"
+          className="text-slate-500 hover:text-white transition-colors text-xs uppercase tracking-widest group"
         >
-          Skip Timer
+          <span className="opacity-50 group-hover:opacity-100 transition-opacity">Skip Timer</span>
         </button>
       </div>
     </motion.div>
