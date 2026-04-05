@@ -17,17 +17,39 @@ interface CompletionProps {
 export default function Completion({ taskText, duration, reason, category, sessionId, onRestart }: CompletionProps) {
   const [xp, setXp] = useState(0);
   const [marked, setMarked] = useState<boolean | null>(null);
+  const supabase = useSupabase();
 
   // Create neon particles for confetti effect
   const particles = Array.from({ length: 40 });
 
-  const markTask = (completed: boolean) => {
+  useEffect(() => {
+    const fetchSessionXp = async () => {
+      if (sessionId && supabase) {
+        const { data } = await supabase
+          .from("sessions")
+          .select("xp_earned")
+          .eq("id", sessionId)
+          .single();
+        if (data) setXp(data.xp_earned);
+      }
+    };
+    fetchSessionXp();
+  }, [sessionId, supabase]);
+
+  const markTask = async (completed: boolean) => {
     setMarked(completed);
     const xpValue = completed ? 10 : 3;
-    setXp(xpValue);
-    
-    // Fallback: We skip updating the DB here since the table lacks 'completed' and 'xp_earned'
-    // This allows the visual confetti and momentum meter to still show locally.
+    if (sessionId && supabase) {
+      try {
+        await supabase
+          .from("sessions")
+          .update({ completed, xp_earned: xpValue })
+          .eq("id", sessionId);
+        setXp(xpValue);
+      } catch (err: any) {
+        console.error("Failed to update status", err);
+      }
+    }
   };
 
   return (

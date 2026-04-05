@@ -51,8 +51,7 @@ export default function StartHome({ onStart }: StartHomeProps) {
 
       if (!error && data) {
         const newSessions = data as SessionData[];
-        // Fallback calculation for XP since we aren't saving it to DB
-        const totalXP = newSessions.reduce((acc, s) => acc + 10, 0); 
+        const totalXP = newSessions.reduce((acc, s) => acc + (s.xp_earned || (s.completed ? 10 : 3)), 0);
         
         // Calculate current rank
         const currentRank = [...RANKS].reverse().find(r => totalXP >= r.minXp)?.name || "Novice";

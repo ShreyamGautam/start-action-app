@@ -45,8 +45,8 @@ export default function StatsDashboard({ sessions: rawSessions }: StatsDashboard
   // Only count explicitly completed sessions towards the positive metrics
   const completedSessions = rawSessions.filter(s => s.completed);
 
-  // XP calculation (fallback since we aren't saving to DB)
-  const totalXP = rawSessions.reduce((acc, s) => acc + 10, 0);
+  // XP calculation
+  const totalXP = rawSessions.reduce((acc, s) => acc + (s.xp_earned || (s.completed ? 10 : 3)), 0);
 
   // Rank calculation
   const currentRankIndex = RANKS.findIndex(r => totalXP >= r.minXp && totalXP <= r.maxXp);

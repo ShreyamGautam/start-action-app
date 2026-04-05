@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useSupabase } from "@/hooks/useSupabase";
+import { useAuth } from "@clerk/nextjs";
 
 interface FocusModeProps {
   taskText: string;
@@ -17,20 +18,21 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
   const [isStarted, setIsStarted] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const supabase = useSupabase();
+  const { userId } = useAuth();
 
   // Use a ref to strictly avoid duplicate session creations in React Strict Mode
   const sessionCreated = useRef(false);
 
   useEffect(() => {
     const recordSession = async () => {
-      if (!isStarted && supabase && !sessionCreated.current) {
+      if (!isStarted && supabase && !sessionCreated.current && userId) {
         setIsStarted(true);
         sessionCreated.current = true;
         try {
           // 1. Insert Task
           const { data: taskData, error: taskError } = await supabase
             .from("tasks")
-            .insert([{ task_text: taskText }])
+            .insert([{ task_text: taskText, user_id: userId }])
             .select()
             .single();
 
@@ -42,7 +44,9 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
                 {
                   task_id: taskData.id,
                   duration: duration,
-                  reason: reason || "N/A"
+                  reason: reason || "N/A",
+                  category: category || "Other",
+                  user_id: userId
                 }
               ])
               .select()
