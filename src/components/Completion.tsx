@@ -63,6 +63,9 @@ export default function Completion({ taskText, duration, reason, category, sessi
       } catch (err: any) {
         console.error("Failed to update status", err);
       }
+    } else {
+      // Fallback update for the UI even if the DB update fails
+      setXp(xpValue);
     }
   };
 

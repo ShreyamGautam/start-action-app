@@ -227,6 +227,16 @@ export default function StartHome({ onStart }: StartHomeProps) {
               <StatsDashboard sessions={sessions} />
               <ChartsDashboard sessions={sessions} />
               <ActivityTable sessions={sessions} onRefresh={fetchAllData} />
+              
+              {/* Diagnostic Footer for Debugging */}
+              <div className="mt-20 pt-10 border-t border-white/5 w-full flex flex-col items-center gap-2 opacity-20 hover:opacity-100 transition-opacity">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">System Diagnostics</p>
+                <div className="flex flex-wrap justify-center gap-4 text-[10px] font-bold text-slate-400">
+                  <span>User: {user?.id ? 'Authenticated' : 'Missing'}</span>
+                  <span>Supabase: {supabase ? 'Initialized' : 'Error'}</span>
+                  <span>Database: {sessions.length} sessions loaded</span>
+                </div>
+              </div>
            </motion.div>
         )}
       </AnimatePresence>

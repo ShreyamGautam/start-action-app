@@ -27,8 +27,8 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
   
   // Ambient Sound State
   const [currentTrack, setCurrentTrack] = useState(AMBIENT_TRACKS[0]);
-  const [isMuted, setIsMuted] = useState(false); // Start unmuted
-  const [volume, setVolume] = useState(0.2); // But low volume
+  const [isMuted, setIsMuted] = useState(true); // Start muted to bridge browser policies
+  const [volume, setVolume] = useState(0.4); 
   const audioRef = useRef<HTMLAudioElement>(null);
   const [showConfig, setShowConfig] = useState(false);
 
