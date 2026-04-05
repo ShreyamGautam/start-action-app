@@ -228,14 +228,28 @@ export default function StartHome({ onStart }: StartHomeProps) {
               <ChartsDashboard sessions={sessions} />
               <ActivityTable sessions={sessions} onRefresh={fetchAllData} />
               
-              {/* Diagnostic Footer for Debugging */}
-              <div className="mt-20 pt-10 border-t border-white/5 w-full flex flex-col items-center gap-2 opacity-20 hover:opacity-100 transition-opacity">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">System Diagnostics</p>
-                <div className="flex flex-wrap justify-center gap-4 text-[10px] font-bold text-slate-400">
-                  <span>User: {user?.id ? 'Authenticated' : 'Missing'}</span>
-                  <span>Supabase: {supabase ? 'Initialized' : 'Error'}</span>
-                  <span>Database: {sessions.length} sessions loaded</span>
+              {/* Enhanced Diagnostic Footer */}
+              <div className="mt-20 pt-10 border-t border-white/5 w-full flex flex-col items-center gap-4 opacity-30 hover:opacity-100 transition-opacity">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Sync Diagnostics</p>
+                <div className="flex flex-col items-center gap-2 text-[10px] font-bold text-slate-400">
+                  <div className="flex gap-6">
+                    <span className={user?.id === subClaim ? "text-brand-neon-green" : "text-brand-neon-pink"}>
+                      Clerk ID: {user?.id || 'None'}
+                    </span>
+                    <span className={user?.id === subClaim ? "text-brand-neon-green" : "text-brand-neon-pink"}>
+                      JWT Sub: {subClaim}
+                    </span>
+                  </div>
+                  <div className="flex gap-6 mt-1">
+                    <span>Client: {supabase ? "Ready" : "Error"}</span>
+                    <span>Load: {sessions.length} sessions</span>
+                  </div>
                 </div>
+                {user?.id !== subClaim && subClaim !== "Loading..." && (
+                  <p className="text-[9px] text-red-500 font-bold max-w-xs text-center border border-red-500/20 px-4 py-2 rounded-lg bg-red-500/5">
+                    ⚠️ ID MISMATCH: Your Clerk JWT template must have 'sub' set to '{{user.id}}' to see your dashboard data.
+                  </p>
+                )}
               </div>
            </motion.div>
         )}
