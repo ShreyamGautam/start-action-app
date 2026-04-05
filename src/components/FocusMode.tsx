@@ -7,9 +7,9 @@ import { useSupabase } from "@/hooks/useSupabase";
 import { useAuth } from "@clerk/nextjs";
 
 const AMBIENT_TRACKS = [
-  { id: 'rain', name: 'Ambient Rain', url: 'https://www.soundjay.com/nature/rain-01.mp3' },
+  { id: 'rain', name: 'Ambient Rain', url: 'https://assets.mixkit.co/active_storage/sfx/2433/2433-preview.mp3' },
   { id: 'lofi', name: 'Focus Lofi', url: 'https://assets.mixkit.co/active_storage/sfx/2432/2432-preview.mp3' },
-  { id: 'synth', name: 'Cyber Synth', url: 'https://www.soundjay.com/free-music/starlight-city.mp3' }
+  { id: 'synth', name: 'Cyber Synth', url: 'https://assets.mixkit.co/active_storage/sfx/2431/2431-preview.mp3' }
 ];
 
 interface FocusModeProps {
