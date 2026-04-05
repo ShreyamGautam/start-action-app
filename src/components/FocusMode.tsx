@@ -2,15 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Music, Volume2, VolumeX } from "lucide-react";
 import { useSupabase } from "@/hooks/useSupabase";
-import { useAuth } from "@clerk/nextjs";
-
-const AMBIENT_TRACKS = [
-  { id: 'lofi', name: 'Deep Focus', url: 'https://stream.zeno.fm/f3wvbbsc698uv' },
-  { id: 'synth', name: 'Synthwave Night', url: 'https://p.scdn.co/mp3-preview/3807abf233480d195f269a83859f77f9859f37c9?cid=774b75d1d0044af78930432716c02978' },
-  { id: 'rain', name: 'Cyber Rain', url: 'https://www.soundjay.com/nature/rain-07.mp3' }
-];
 
 interface FocusModeProps {
   taskText: string;
@@ -24,37 +16,21 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
   const [timeLeft, setTimeLeft] = useState(duration);
   const [isStarted, setIsStarted] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [currentTrack, setCurrentTrack] = useState(AMBIENT_TRACKS[0]);
-  const [isMuted, setIsMuted] = useState(true);
-  const [volume, setVolume] = useState(0.5);
-  const audioRef = useRef<HTMLAudioElement>(null);
   const supabase = useSupabase();
-  const { userId } = useAuth();
 
   // Use a ref to strictly avoid duplicate session creations in React Strict Mode
   const sessionCreated = useRef(false);
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
-      if (!isMuted) {
-        audioRef.current.play().catch(() => setIsMuted(true));
-      } else {
-        audioRef.current.pause();
-      }
-    }
-  }, [isMuted, currentTrack, volume]);
-
-  useEffect(() => {
     const recordSession = async () => {
-      if (!isStarted && supabase && !sessionCreated.current && userId) {
+      if (!isStarted && supabase && !sessionCreated.current) {
         setIsStarted(true);
         sessionCreated.current = true;
         try {
           // 1. Insert Task
           const { data: taskData, error: taskError } = await supabase
             .from("tasks")
-            .insert([{ task_text: taskText, user_id: userId }])
+            .insert([{ task_text: taskText }])
             .select()
             .single();
 
@@ -66,9 +42,7 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
                 {
                   task_id: taskData.id,
                   duration: duration,
-                  reason: reason || "N/A",
-                  category: category || "Other",
-                  user_id: userId
+                  reason: reason || "N/A"
                 }
               ])
               .select()
@@ -85,7 +59,7 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
     };
     
     recordSession();
-  }, [taskText, duration, reason, isStarted]);
+  }, [taskText, duration, reason, isStarted, supabase]);
 
   useEffect(() => {
     if (timeLeft <= 0) {
@@ -195,56 +169,9 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
           <div className="absolute inset-0 rounded-full animate-glow-pulse pointer-events-none" />
         </motion.div>
 
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center gap-6 mt-6 mb-12 sm:mb-8 w-full max-w-sm"
-        >
-          <audio 
-            ref={audioRef} 
-            src={currentTrack.url} 
-            loop 
-            playsInline
-          />
-          
-          <div className="flex flex-wrap justify-center gap-2">
-            {AMBIENT_TRACKS.map(track => (
-              <button
-                key={track.id}
-                onClick={() => setCurrentTrack(track)}
-                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentTrack.id === track.id ? 'bg-brand-neon-blue/20 text-brand-neon-blue border border-brand-neon-blue' : 'bg-white/5 text-slate-500 border border-transparent hover:text-slate-300'}`}
-              >
-                {track.name}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-4 bg-slate-900/60 p-2 rounded-3xl border border-white/5 backdrop-blur-xl">
-            <button
-              onClick={() => setIsMuted(!isMuted)}
-              className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 text-brand-neon-blue hover:bg-white/10 transition-all group"
-            >
-              {isMuted ? <VolumeX className="w-5 h-5 opacity-50 group-hover:opacity-100" /> : <Volume2 className="w-5 h-5 animate-pulse" />}
-            </button>
-            
-            <div className="flex items-center gap-2 px-4">
-              <Music className="w-4 h-4 text-slate-500" />
-              <input 
-                type="range" 
-                min="0" 
-                max="1" 
-                step="0.01" 
-                value={volume}
-                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="w-24 accent-brand-neon-blue h-1 bg-white/10 rounded-full appearance-none cursor-pointer"
-              />
-            </div>
-          </div>
-        </motion.div>
-
         <button 
           onClick={() => onComplete(sessionId)}
-          className="text-slate-500 hover:text-white transition-colors text-sm uppercase tracking-wider"
+          className="text-slate-500 hover:text-white transition-colors text-sm uppercase tracking-wider mt-4"
         >
           Skip Timer
         </button>

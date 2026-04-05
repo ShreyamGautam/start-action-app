@@ -35,23 +35,6 @@ export default function StartHome({ onStart }: StartHomeProps) {
     { name: "Flow Master", minXp: 601 },
   ];
 
-  const syncUserProfile = useCallback(async (totalXp: number, rank: string) => {
-    if (!user || !supabase) return;
-    
-    try {
-      await supabase.from("profiles").upsert({
-        user_id: user.id,
-        display_name: user.firstName || user.username || "Anonymous",
-        avatar_url: user.imageUrl,
-        total_xp: totalXp,
-        current_rank: rank,
-        last_active: new Date().toISOString()
-      });
-    } catch (err) {
-      console.error("Profile sync failed", err);
-    }
-  }, [user, supabase]);
-
   const fetchAllData = useCallback(async () => {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return;
 
@@ -68,7 +51,8 @@ export default function StartHome({ onStart }: StartHomeProps) {
 
       if (!error && data) {
         const newSessions = data as SessionData[];
-        const totalXP = newSessions.reduce((acc, s) => acc + (s.xp_earned || (s.completed ? 10 : 3)), 0);
+        // Fallback calculation for XP since we aren't saving it to DB
+        const totalXP = newSessions.reduce((acc, s) => acc + 10, 0); 
         
         // Calculate current rank
         const currentRank = [...RANKS].reverse().find(r => totalXP >= r.minXp)?.name || "Novice";
@@ -85,16 +69,13 @@ export default function StartHome({ onStart }: StartHomeProps) {
         
         setPrevRank(currentRank);
         setSessions(newSessions);
-        
-        // Sync social profile
-        syncUserProfile(totalXP, currentRank);
       }
     } catch (error) {
       console.error("Error fetching sessions:", error);
     } finally {
       setLoading(false);
     }
-  }, [prevRank, user, syncUserProfile]);
+  }, [prevRank, user]);
 
   useEffect(() => {
     fetchAllData();
@@ -117,10 +98,6 @@ export default function StartHome({ onStart }: StartHomeProps) {
             }}
           />
         </Show>
-      </div>
-
-      <div className="fixed bottom-4 sm:bottom-6 left-4 sm:left-6 z-40">
-        <PresenceCounter />
       </div>
       <AnimatePresence>
         {showLevelUp && (
