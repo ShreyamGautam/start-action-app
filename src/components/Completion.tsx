@@ -24,17 +24,31 @@ export default function Completion({ taskText, duration, reason, category, sessi
 
   useEffect(() => {
     const fetchSessionXp = async () => {
+      // Default XP for different durations if fetch fails
+      const defaultXp = duration >= 300 ? 10 : 3;
+      
       if (sessionId && supabase) {
-        const { data } = await supabase
-          .from("sessions")
-          .select("xp_earned")
-          .eq("id", sessionId)
-          .single();
-        if (data) setXp(data.xp_earned);
+        try {
+          const { data, error } = await supabase
+            .from("sessions")
+            .select("xp_earned")
+            .eq("id", sessionId)
+            .single();
+          
+          if (!error && data && data.xp_earned > 0) {
+            setXp(data.xp_earned);
+          } else {
+            setXp(defaultXp);
+          }
+        } catch (e) {
+          setXp(defaultXp);
+        }
+      } else {
+        setXp(defaultXp);
       }
     };
     fetchSessionXp();
-  }, [sessionId, supabase]);
+  }, [sessionId, supabase, duration]);
 
   const markTask = async (completed: boolean) => {
     setMarked(completed);

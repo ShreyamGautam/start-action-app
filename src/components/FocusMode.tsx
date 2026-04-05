@@ -7,9 +7,9 @@ import { useSupabase } from "@/hooks/useSupabase";
 import { useAuth } from "@clerk/nextjs";
 
 const AMBIENT_TRACKS = [
-  { id: 'lofi', name: 'Deep Focus', url: 'https://stream.zeno.fm/f3wvbbsc698uv' },
-  { id: 'synth', name: 'Synthwave Night', url: 'https://p.scdn.co/mp3-preview/3807abf233480d195f269a83859f77f9859f37c9?cid=774b75d1d0044af78930432716c02978' },
-  { id: 'rain', name: 'Cyber Rain', url: 'https://www.soundjay.com/nature/rain-07.mp3' }
+  { id: 'rain', name: 'Ambient Rain', url: 'https://www.soundjay.com/nature/rain-07.mp3' },
+  { id: 'lofi', name: 'Focus Lofi', url: 'https://l-earn.github.io/lofi/audio/lofi-1.mp3' },
+  { id: 'synth', name: 'Cyber Synth', url: 'https://www.soundjay.com/free-music/starlight-city.mp3' }
 ];
 
 interface FocusModeProps {
@@ -27,8 +27,8 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
   
   // Ambient Sound State
   const [currentTrack, setCurrentTrack] = useState(AMBIENT_TRACKS[0]);
-  const [isMuted, setIsMuted] = useState(true);
-  const [volume, setVolume] = useState(0.4);
+  const [isMuted, setIsMuted] = useState(false); // Start unmuted
+  const [volume, setVolume] = useState(0.2); // But low volume
   const audioRef = useRef<HTMLAudioElement>(null);
   const [showConfig, setShowConfig] = useState(false);
 
@@ -248,12 +248,14 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
           </div>
         </motion.div>
 
-        <button 
+        <motion.button 
+          whileHover={{ scale: 1.05, backgroundColor: "rgba(255, 255, 255, 0.1)" }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => onComplete(sessionId)}
-          className="text-slate-500 hover:text-white transition-colors text-xs uppercase tracking-widest group"
+          className="px-10 py-4 rounded-full border border-white/20 text-white/50 hover:text-white font-black uppercase tracking-[0.3em] text-[10px] transition-all bg-white/5"
         >
-          <span className="opacity-50 group-hover:opacity-100 transition-opacity">Skip Timer</span>
-        </button>
+          Skip Timer & Complete
+        </motion.button>
       </div>
     </motion.div>
   );
