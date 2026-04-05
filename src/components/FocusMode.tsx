@@ -140,18 +140,18 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-brand-bg flex items-center justify-center z-50 p-6"
+      className="fixed inset-0 bg-brand-bg z-50 overflow-y-auto"
     >
-      <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
+      <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none fixed">
         <div className="w-[500px] h-[500px] rounded-full bg-brand-neon-blue/20 blur-[120px] mix-blend-screen" />
       </div>
 
-      <div className="relative z-10 flex flex-col items-center max-w-2xl w-full">
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full py-20 px-6">
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-center mb-16"
+          className="text-center mb-12"
         >
           <p className="text-brand-neon-green/80 uppercase tracking-widest text-sm font-semibold mb-2">Current Focus</p>
           <h2 className="text-4xl md:text-5xl font-bold text-white leading-tight">
@@ -160,7 +160,7 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
         </motion.div>
 
         <motion.div 
-          className="relative flex items-center justify-center mb-12"
+          className="relative flex items-center justify-center mb-10"
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.4, type: "spring" }}

@@ -24,8 +24,8 @@ export default function Completion({ taskText, duration, reason, category, sessi
 
   useEffect(() => {
     const fetchSessionXp = async () => {
-      // Default XP for different durations if fetch fails
-      const defaultXp = duration >= 300 ? 10 : 3;
+      // Standardize to 10 XP for all completed sessions as default
+      const defaultXp = 10;
       
       if (sessionId && supabase) {
         try {
