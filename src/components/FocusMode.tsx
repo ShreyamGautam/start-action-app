@@ -7,8 +7,8 @@ import { useSupabase } from "@/hooks/useSupabase";
 import { useAuth } from "@clerk/nextjs";
 
 const AMBIENT_TRACKS = [
-  { id: 'rain', name: 'Ambient Rain', url: 'https://www.soundjay.com/nature/rain-07.mp3' },
-  { id: 'lofi', name: 'Focus Lofi', url: 'https://l-earn.github.io/lofi/audio/lofi-1.mp3' },
+  { id: 'rain', name: 'Ambient Rain', url: 'https://www.soundjay.com/nature/rain-01.mp3' },
+  { id: 'lofi', name: 'Focus Lofi', url: 'https://assets.mixkit.co/active_storage/sfx/2432/2432-preview.mp3' },
   { id: 'synth', name: 'Cyber Synth', url: 'https://www.soundjay.com/free-music/starlight-city.mp3' }
 ];
 
@@ -124,7 +124,8 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
     if (audioRef.current) {
       audioRef.current.volume = volume;
       if (!isMuted) {
-        audioRef.current.play().catch(() => setIsMuted(true));
+        // No catch here to prevent the UI from snapping back to muted
+        audioRef.current.play();
       } else {
         audioRef.current.pause();
       }
