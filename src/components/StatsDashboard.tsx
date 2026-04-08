@@ -1,5 +1,5 @@
-import { Activity, Clock, Flame, PieChart, LogOut } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { Activity, Clock, Flame, LogOut } from "lucide-react";
+import { useClerk } from "@clerk/nextjs";
 import { motion, Variants } from "framer-motion";
 
 export interface SessionData {
@@ -42,6 +42,7 @@ const RANKS = [
 ];
 
 export default function StatsDashboard({ sessions: rawSessions }: StatsDashboardProps) {
+  const { signOut } = useClerk();
   // Only count explicitly completed sessions towards the positive metrics
   const completedSessions = rawSessions.filter(s => s.completed);
 
@@ -154,8 +155,8 @@ export default function StatsDashboard({ sessions: rawSessions }: StatsDashboard
             <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 shadow-inner hidden sm:block">
               {rawSessions.length} Total Starts
             </span>
-            <button 
-              onClick={() => supabase && supabase.auth.signOut()}
+            <button
+              onClick={() => signOut()}
               className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-slate-700"
               title="Log Out"
             >
