@@ -24,6 +24,7 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
   const [timeLeft, setTimeLeft] = useState(duration);
   const [isStarted, setIsStarted] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [dbError, setDbError] = useState<string | null>(null);
 
   // Audio
   const [currentTrack, setCurrentTrack] = useState(AMBIENT_TRACKS[0]);
@@ -50,7 +51,9 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
           .single();
 
         if (taskError || !taskData) {
-          console.error("Task insert error:", taskError?.code, taskError?.message);
+          const msg = `Task save failed: ${taskError?.code} — ${taskError?.message}`;
+          console.error(msg);
+          setDbError(msg);
           return;
         }
 
@@ -67,13 +70,20 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
           .single();
 
         if (sessionError) {
-          console.error("Session insert error:", sessionError?.code, sessionError?.message);
+          const msg = `Session save failed: ${sessionError?.code} — ${sessionError?.message}`;
+          console.error(msg);
+          setDbError(msg);
           return;
         }
 
-        if (sessionData) setSessionId(sessionData.id);
-      } catch (err) {
-        console.error("recordSession crash:", err);
+        if (sessionData) {
+          setSessionId(sessionData.id);
+          setDbError(null); // clear any previous error
+        }
+      } catch (err: any) {
+        const msg = `Crash: ${err?.message}`;
+        console.error(msg);
+        setDbError(msg);
       }
     };
 
@@ -114,6 +124,13 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-brand-bg z-50 overflow-y-auto"
     >
+      {/* DB Error Banner */}
+      {dbError && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] bg-red-900/90 border border-red-500 text-red-200 text-xs font-mono px-6 py-3 rounded-xl max-w-lg text-center shadow-2xl">
+          ⚠️ {dbError}
+        </div>
+      )}
+
       <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
         <div className="w-[500px] h-[500px] rounded-full bg-brand-neon-blue/20 blur-[120px] mix-blend-screen" />
       </div>
