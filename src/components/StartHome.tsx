@@ -32,6 +32,8 @@ export default function StartHome({ onStart }: StartHomeProps) {
   const [showLevelUp, setShowLevelUp] = useState<string | null>(null);
   const [category, setCategory] = useState("Work");
   const [customInput, setCustomInput] = useState("");
+  const [testResult, setTestResult] = useState<string | null>(null);
+  const [isTestLoading, setIsTestLoading] = useState(false);
 
   const categoriesList = ["Work", "Study", "Coding", "Health", "Life", "Other"];
 
@@ -82,6 +84,35 @@ export default function StartHome({ onStart }: StartHomeProps) {
   const handleStart = (duration: number) => {
     if (!task.trim()) return;
     onStart(task, duration, category);
+  };
+
+  const runSyncTest = async () => {
+    setTestResult("🔄 Testing...");
+    if (!supabase || !user) {
+      setTestResult("❌ Not ready."); return;
+    }
+    try {
+      const { data: tData, error: tErr } = await supabase
+        .from("tasks")
+        .insert([{ task_text: "DIAGNOSTIC TEST", user_id: user.id }])
+        .select().single();
+      
+      if (tErr) {
+        setTestResult(`❌ Task: ${tErr.code}`); return;
+      }
+
+      const { error: sErr } = await supabase
+        .from("sessions")
+        .insert([{ task_id: tData.id, duration: 1, user_id: user.id, reason: "Sync Test" }]);
+      
+      if (sErr) setTestResult(`❌ Session: ${sErr.code}`);
+      else {
+        setTestResult("✅ Success!");
+        fetchAllData();
+      }
+    } catch (err: any) {
+      setTestResult(`❌ Crash: ${err.message}`);
+    }
   };
 
   return (
@@ -246,6 +277,45 @@ export default function StartHome({ onStart }: StartHomeProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Sync Diagnostic Footer */}
+      <div className="w-full mt-20 pt-10 border-t border-white/5 flex flex-col items-center gap-4 opacity-50 hover:opacity-100 transition-opacity pb-10">
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Master Sync Diagnostics</p>
+        <div className="flex flex-col items-center gap-4 text-[10px] font-bold text-slate-400">
+          <div className="flex gap-6">
+            <span className="text-brand-neon-green">Clerk Link: Verified</span>
+            <span className={testResult === "✅ Success!" ? "text-brand-neon-green" : "text-brand-neon-pink"}>
+              Supabase Sync: {testResult || "Idle"}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <button onClick={runSyncTest} className="px-5 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/5 text-white/50 hover:text-white transition-all uppercase tracking-widest text-[9px] font-black">Run Sync Test</button>
+            
+            <button 
+              onClick={async () => {
+                if (!supabase) return;
+                setTestResult("🔄 Checking RPC...");
+                try {
+                  const { data, error } = await supabase.rpc('debug_user_id');
+                  if (error) setTestResult(`❌ RPC: ${error.code}`);
+                  else setTestResult(data ? `✅ ID Found: ${data}` : '❌ NULL (Auth Failed)');
+                } catch (err: any) {
+                  setTestResult(`❌ RPC Error: ${err.message}`);
+                }
+              }} 
+              className="px-5 py-2 rounded-full bg-brand-neon-blue/10 hover:bg-brand-neon-blue/20 border border-brand-neon-blue/20 text-brand-neon-blue hover:text-white transition-all uppercase tracking-widest text-[9px] font-black shadow-[0_0_15px_rgba(0,243,255,0.1)]"
+            >
+              Verify JWT RPC
+            </button>
+          </div>
+        </div>
+        {testResult?.includes("NULL") && (
+          <p className="text-[9px] text-red-500 font-bold max-w-sm text-center border border-red-500/20 px-6 py-3 rounded-xl bg-red-500/5 mt-2 animate-pulse">
+            ⚠️ CRITICAL: Supabase sees your ID as NULL. Ensure your Clerk Template "supabase" has aud: authenticated and sub: &#123;&#123;user.id&#125;&#125;
+          </p>
+        )}
+      </div>
     </div>
   );
 }
+
