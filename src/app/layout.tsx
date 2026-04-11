@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${inter.className} min-h-screen bg-brand-bg text-slate-50 flex flex-col antialiased selection:bg-brand-neon-green selection:text-brand-bg`}>
-        <ClerkProvider>
+        <ClerkProvider clerkJSUrl="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
           {children}
         </ClerkProvider>
       </body>

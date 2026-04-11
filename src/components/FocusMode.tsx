@@ -51,7 +51,9 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
           .single();
 
         if (taskError || !taskData) {
-          const msg = `Task save failed: ${taskError?.code} — ${taskError?.message}`;
+          // DEEP DIAGNOSTIC: Compare Hook ID vs Token ID
+          const { data: tokenId } = await supabase.rpc('debug_user_id');
+          const msg = `RLS Failure (42501). Logic Check: Hook[${userId || 'None'}] ↔ Token[${tokenId || 'NULL'}]. Ensure they match!`;
           console.error(msg);
           setDbError(msg);
           return;
