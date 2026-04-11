@@ -32,14 +32,14 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
   const [volume, setVolume] = useState(0.4);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const supabase = useSupabase();
+  const { client: supabase, isReady } = useSupabase();
   const { userId } = useAuth();
   const sessionCreated = useRef(false);
 
   // Save session to DB on mount
   useEffect(() => {
     const recordSession = async () => {
-      if (isStarted || !supabase || sessionCreated.current || !userId) return;
+      if (isStarted || !supabase || !isReady || sessionCreated.current || !userId) return;
       setIsStarted(true);
       sessionCreated.current = true;
 

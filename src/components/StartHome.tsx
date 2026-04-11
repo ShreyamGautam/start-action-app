@@ -23,7 +23,7 @@ const RANKS = [
 
 export default function StartHome({ onStart }: StartHomeProps) {
   const { user } = useUser();
-  const supabase = useSupabase();
+  const { client: supabase, isReady } = useSupabase();
 
   const [task, setTask] = useState("");
   const [sessions, setSessions] = useState<SessionData[]>([]);
@@ -38,7 +38,7 @@ export default function StartHome({ onStart }: StartHomeProps) {
   const categoriesList = ["Work", "Study", "Coding", "Health", "Life", "Other"];
 
   const fetchAllData = useCallback(async () => {
-    if (!supabase || !user) return;
+    if (!supabase || !isReady || !user) return;
     try {
       const { data, error } = await supabase
         .from("sessions")
@@ -88,7 +88,7 @@ export default function StartHome({ onStart }: StartHomeProps) {
 
   const runSyncTest = async () => {
     setTestResult("🔄 Testing...");
-    if (!supabase || !user) {
+    if (!supabase || !isReady || !user) {
       setTestResult("❌ Not ready."); return;
     }
     try {
@@ -293,7 +293,9 @@ export default function StartHome({ onStart }: StartHomeProps) {
             
             <button 
               onClick={async () => {
-                if (!supabase) return;
+                if (!supabase || !isReady) {
+                  setTestResult("❌ Not ready."); return;
+                }
                 setTestResult("🔄 Checking RPC...");
                 try {
                   const { data, error } = await supabase.rpc('debug_user_id');

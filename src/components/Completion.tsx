@@ -17,7 +17,7 @@ interface CompletionProps {
 export default function Completion({ taskText, sessionId, onRestart }: CompletionProps) {
   const [xp, setXp] = useState<number | null>(null);   // null = not decided yet
   const [marked, setMarked] = useState<boolean | null>(null);
-  const supabase = useSupabase();
+  const { client: supabase, isReady } = useSupabase();
 
   // Neon confetti particles
   const particles = Array.from({ length: 40 });
@@ -27,7 +27,7 @@ export default function Completion({ taskText, sessionId, onRestart }: Completio
     setMarked(completed);
     setXp(xpValue);    // show XP immediately after click
 
-    if (sessionId && supabase) {
+    if (sessionId && supabase && isReady) {
       try {
         await supabase
           .from("sessions")
