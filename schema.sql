@@ -1,50 +1,58 @@
 -- ============================================================
--- FINAL MASTER SCHEMA (Clerk + Supabase + Diagnostics)
+-- MASTER UNIFIED SCHEMA (The Source of Truth)
 -- ============================================================
 
 -- 1. CLEAN SLATE
+-- Drops everything to ensure no old/conflicting policies remain.
 DROP TABLE IF EXISTS sessions CASCADE;
 DROP TABLE IF EXISTS tasks CASCADE;
 
--- 2. CREATE TABLES
+-- 2. CORE TABLES
+-- user_id is TEXT to match Clerk's String format.
 CREATE TABLE tasks (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    task_text TEXT NOT NULL,
-    user_id TEXT NOT NULL, -- Clerk user IDs are TEXT
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    task_text  TEXT NOT NULL,
+    user_id    TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
 CREATE TABLE sessions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
-    user_id TEXT NOT NULL, -- Clerk user IDs are TEXT
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    task_id    UUID REFERENCES tasks(id) ON DELETE CASCADE,
+    user_id    TEXT NOT NULL,
     start_time TIMESTAMPTZ DEFAULT now() NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
-    duration INTEGER NOT NULL,
-    reason TEXT,
-    completed BOOLEAN DEFAULT FALSE,
-    category TEXT DEFAULT 'Other',
-    xp_earned INTEGER DEFAULT 0
+    duration   INTEGER NOT NULL,
+    reason     TEXT,
+    completed  BOOLEAN DEFAULT FALSE,
+    category   TEXT DEFAULT 'Other',
+    xp_earned  INTEGER DEFAULT 0
 );
 
--- 3. ENABLE RLS
-ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+-- 3. ENABLE SECURITY
+ALTER TABLE tasks    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
 
--- 4. CREATE POLICIES
-CREATE POLICY "tasks_policy" ON tasks
-    FOR ALL USING ((auth.jwt() ->> 'sub') = user_id)
-    WITH CHECK ((auth.jwt() ->> 'sub') = user_id);
+-- 4. FINAL SECURE POLICIES (Clerk ↔ Supabase Bridge)
+-- These ensure users can ONLY see and modify their own data.
+CREATE POLICY "secure_user_tasks" ON tasks 
+    FOR ALL 
+    TO authenticated 
+    USING ( (auth.jwt() ->> 'sub')::text = user_id::text )
+    WITH CHECK ( (auth.jwt() ->> 'sub')::text = user_id::text );
 
-CREATE POLICY "sessions_policy" ON sessions
-    FOR ALL USING ((auth.jwt() ->> 'sub') = user_id)
-    WITH CHECK ((auth.jwt() ->> 'sub') = user_id);
+CREATE POLICY "secure_user_sessions" ON sessions 
+    FOR ALL 
+    TO authenticated 
+    USING ( (auth.jwt() ->> 'sub')::text = user_id::text )
+    WITH CHECK ( (auth.jwt() ->> 'sub')::text = user_id::text );
 
--- 5. INDEXES
-CREATE INDEX tasks_user_idx ON tasks(user_id);
+-- 5. PERFORMANCE INDEXES
+CREATE INDEX tasks_user_idx    ON tasks(user_id);
 CREATE INDEX sessions_user_idx ON sessions(user_id);
 
--- 6. DEBUG HELPERS (Your proposed functions)
+-- 6. DIAGNOSTIC HELPERS
+-- Use these to verify identity: SELECT debug_user_id();
 CREATE OR REPLACE FUNCTION debug_jwt()
 RETURNS JSONB AS $$
 BEGIN
@@ -59,5 +67,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 7. RELOAD
+-- 7. NOTIFY SYSTEM
+-- Forces Supabase to recognize schema changes immediately.
 NOTIFY pgrst, 'reload schema';
