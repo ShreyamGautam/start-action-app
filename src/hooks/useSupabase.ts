@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/nextjs";
-import { createClerkSupabaseClient } from "@/lib/supabase";
+import { createClient as createBrowserClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
 import { SupabaseClient } from "@supabase/supabase-js";
 
@@ -11,20 +11,19 @@ export function useSupabase() {
     client: SupabaseClient;
     isReady: boolean;
   }>({
-    client: createClerkSupabaseClient(),
+    client: createBrowserClient(),
     isReady: false
   });
 
   useEffect(() => {
     const updateClient = async () => {
-      // Use isLoaded to wait for Clerk, but only mark ready when token is set
       if (isLoaded && userId) {
         try {
           const token = await getToken({ template: "supabase" });
           if (token) {
             console.log("🔐 [Supabase Sync] Authenticated Client Ready.");
             setSession({
-              client: createClerkSupabaseClient(token),
+              client: createBrowserClient(token),
               isReady: true
             });
           } else {
@@ -42,3 +41,4 @@ export function useSupabase() {
 
   return session;
 }
+

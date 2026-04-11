@@ -53,9 +53,11 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
         if (taskError || !taskData) {
           // DEEP DIAGNOSTIC: Compare Hook ID vs Token ID
           const { data: tokenId } = await supabase.rpc('debug_user_id');
-          const msg = `RLS Failure (42501). Logic Check: Hook[${userId || 'None'}] ↔ Token[${tokenId || 'NULL'}]. Ensure they match!`;
+          const msg = `RLS Failure (42501). Logic Check: Hook[${userId?.substring(0,8)}...] ↔ Token[${tokenId?.substring(0,8) || 'NULL'}...]`;
           console.error(msg);
           setDbError(msg);
+          sessionCreated.current = false; // Allow retry
+          setIsStarted(false);
           return;
         }
 
@@ -128,8 +130,20 @@ export default function FocusMode({ taskText, duration, reason, category, onComp
     >
       {/* DB Error Banner */}
       {dbError && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] bg-red-900/90 border border-red-500 text-red-200 text-xs font-mono px-6 py-3 rounded-xl max-w-lg text-center shadow-2xl">
-          ⚠️ {dbError}
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[200] flex flex-col items-center gap-3">
+          <div className="bg-red-500 text-white text-[10px] font-black uppercase tracking-widest px-6 py-4 rounded-2xl shadow-[0_0_30px_rgba(239,68,68,0.5)] border border-white/20 text-center backdrop-blur-xl">
+             ⚠️ {dbError}
+          </div>
+          <button 
+            onClick={() => {
+              setDbError(null);
+              sessionCreated.current = false;
+              setIsStarted(false);
+            }}
+            className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-tighter px-4 py-2 rounded-full border border-white/10 backdrop-blur-md transition-all"
+          >
+            Retry Database Connection
+          </button>
         </div>
       )}
 
